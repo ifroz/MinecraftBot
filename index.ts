@@ -1,1 +1,5 @@
-console.log("Gecijo tajpszkript")
+async function main() {
+  console.log("Entry")
+}
+
+main()
