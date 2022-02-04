@@ -1,16 +1,18 @@
 import { Bot } from 'mineflayer'
-import { Block } from 'prismarine-block'
 
 import { log } from './helpers'
 
 export async function sleep(bot: Bot) {
+  if (bot.isSleeping) return // log('ALSZOM MAR')
+  if (bot.time.isDay) return // log('NAPPAL VAN')
+
   const beds = bot.findBlocks({
-    matching: (b: Block) => !!b.name.match(/bed$/g),
-    maxDistance: 128,
-    count: 8,
+    matching: block => block.name.endsWith('_bed'),
+    maxDistance: 32,
+    count: Infinity,
   })
 
-  log(beds.length ? `Found ${beds.length} beds.` : 'No beds found.')
+  log(beds.length ? `Found ${beds.length} beds nearby.` : 'No beds found nearby.')
 
   for (const vec3 of beds) {
     const bed = bot.blockAt(vec3)
