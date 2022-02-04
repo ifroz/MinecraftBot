@@ -4,7 +4,11 @@ import { Block } from 'prismarine-block'
 
 import config from './config'
 
-const log = (...payload: any[]) => console.log(...payload)
+const log = (msg: any, ...payload: any[]) => 
+  console.log(msg, ...payload.map(p => JSON.stringify(p)))
+
+const wait = (ms: number = 1000) => 
+  new Promise<void>((resolve) => setTimeout(resolve, ms))
 
 async function main() {
   const bot = mineflayer.createBot({
@@ -13,8 +17,9 @@ async function main() {
     port: config.port,
   } as any)
 
-  bot.on('spawn', () => {
-    bot.chat(`Hello, my dear humans.`)
+  bot.on('spawn', async () => {
+    await wait(2000)
+    bot.chat(`[^_^] I am a bot.`)
 
     sleep(bot)
     exitOnChatMessage(bot)
@@ -28,36 +33,45 @@ async function sleep(bot: Bot) {
     count: 8,
   })
 
-  log(beds.length ? `Found ${beds.length} beds.` : 'Nope, found no beds.')
+  log(beds.length ? `Found ${beds.length} beds.` : 'No beds found.')
 
-  const errors: any[] = []
-  for (const bed of beds) {
+  for (const vec3 of beds) {
+    const bed = bot.blockAt(vec3)
+    if (!bed) continue
+
     try {
-      await new Promise<void>((resolve, reject) => 
-        bot.sleep(
-          bot.blockAt(bed) as Block, 
-          (err) => err ? reject(err) : resolve())
-        )
-      log('Sleeping???', bot.isSleeping)
+      await bot.sleep(bed)
+
+      log('Sleeping?', bot.isSleeping)
       if (bot.isSleeping) {
         bot.chat(`ZzzZz....`)
+        return
+      } else {
+        bot.chat(`ZzzZz.... (hopefully, something seems off)`)
       }
-      return true
     } catch (err) {
-      log('Failed to sleep', (err as Error).message)
+      const message = `Insomnia: ${(err as Error)?.message}`
+      log('Insomnia: ', message)
+      bot.chat(`Insomnia: ${message}`)
     }
   }
 
-  bot.chat(`Failed to sleep: \n${errors.map((err) => err.message).join('\n')}`)
+  if (!beds.length) {
+    bot.chat(`Insomnia: No beds found.`)
+  }
 }
 
 function exitOnChatMessage(bot: Bot, messageString = '#exit') {
   bot.on('message', (chatMessage) => {
     if (chatMessage.toString().includes(messageString)) {
-      bot.chat("See y'all!")
-      setImmediate(() => bot.end('Bye.'))
+      exit(bot)
     }
   })
+}
+
+function exit(bot: Bot) {
+  bot.chat("See y'all!")
+  setImmediate(() => bot.end('Bye.'))
 }
 
 main()
