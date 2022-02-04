@@ -1,8 +1,10 @@
 import mineflayer, { Bot } from 'mineflayer'
+import { pathfinder } from "mineflayer-pathfinder"
 
 import { sleep } from './sleep'
 
 import config from './config'
+import { followPlayer } from './follow'
 
 const HELP = `I am a bot. Try #{help|sleep|quit}.`
 
@@ -13,12 +15,17 @@ async function main() {
     port: config.port,
   } as any)
 
+  bot.loadPlugin(pathfinder)
+
   bot.on('spawn', async () => {
+    onChatMessage(bot, '#help', (username) => bot.whisper(username, HELP))
     onChatMessage(bot, '#quit', () => quit(bot))
     onChatMessage(bot, '#sleep', async (user) => {
       bot.whisper(user, await sleep(bot))
     })
-    onChatMessage(bot, '#help', (username) => bot.whisper(username, HELP))
+
+    onChatMessage(bot, '#follow', (username) => followPlayer(bot, username))
+    onChatMessage(bot, '#stop', () => bot.pathfinder.stop())
 
     bot.chat(HELP)
 
