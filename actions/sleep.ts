@@ -1,6 +1,6 @@
 import { Bot } from 'mineflayer'
 
-import { log } from './helpers'
+import { log } from '../helpers'
 
 export async function sleep(bot: Bot): Promise<string> {
   if (bot.isSleeping) return 'Already sleeping'

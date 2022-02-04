@@ -1,10 +1,10 @@
 import mineflayer, { Bot } from 'mineflayer'
 import { pathfinder } from "mineflayer-pathfinder"
 
-import { sleep } from './sleep'
+import { followPlayer } from './actions/follow'
+import { sleep } from './actions/sleep'
 
 import config from './config'
-import { followPlayer } from './follow'
 
 const HELP = `I am a bot. Try #{help|sleep|quit}.`
 
