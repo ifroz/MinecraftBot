@@ -22,11 +22,28 @@ async function main() {
     
     bot.chat(`[^_^] I am a bot.`)
 
-    onChatMessage(bot, '#exit', () => exit(bot))
+    onChatMessage(bot, '#quit', () => quit(bot))
     onChatMessage(bot, '#sleep', () => sleep(bot))
 
     sleep(bot)
   })
+}
+
+function onChatMessage(bot: Bot, message: string, action: () => void | Promise<void>) {
+  bot.on('message', async (chatMessage) => {
+    if (chatMessage.toString().includes(message)) {
+      try {
+        await action()
+      } catch (err) {
+        bot.chat(`Failed to ${message}: ${(err as Error)?.message}`)
+      }
+    }
+  })
+}
+
+function quit(bot: Bot) {
+  bot.chat("See y'all!")
+  bot.quit()
 }
 
 async function sleep(bot: Bot) {
@@ -55,26 +72,12 @@ async function sleep(bot: Bot) {
     } catch (err) {
       const message = `Insomnia: ${(err as Error)?.message}`
       log('Insomnia: ', message)
-      bot.chat(`Insomnia: ${message}`)
     }
   }
 
   if (!beds.length) {
     bot.chat(`Insomnia: No beds found.`)
   }
-}
-
-function onChatMessage(bot: Bot, message: string, action: () => void | Promise<void>) {
-  bot.on('message', async (chatMessage) => {
-    if (chatMessage.toString().includes(message)) {
-      await action()
-    }
-  })
-}
-
-function exit(bot: Bot) {
-  bot.chat("See y'all!")
-  setImmediate(() => bot.end('Bye.'))
 }
 
 main()
