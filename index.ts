@@ -1,4 +1,4 @@
-import mineflayer from 'mineflayer'
+import mineflayer, { Bot } from 'mineflayer'
 import config from './config'
 
 async function main() {
@@ -9,10 +9,19 @@ async function main() {
   } as any)
 
   bot.on('login', () => {
-    bot.chat('Hello, my dear humans. ')
-  })
+    exitOnChatMessage(bot)
 
-  // bot.on('message', chatMessage => {})
+    bot.chat(`Hello, my dear humans.`)
+  })
+}
+
+function exitOnChatMessage(bot: Bot, messageString = '#exit') {
+  bot.on('message', (chatMessage) => {
+    if (chatMessage.toString().includes(messageString)) {
+      bot.chat("See y'all!")
+      setImmediate(() => bot.end('Bye.'))
+    }
+  })
 }
 
 main()
