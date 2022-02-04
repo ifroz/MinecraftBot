@@ -19,7 +19,7 @@ async function main() {
 
   bot.on('spawn', async () => {
     onChatMessage(bot, '#help', (username) => bot.whisper(username, HELP))
-    onChatMessage(bot, '#quit', () => quit(bot))
+    onChatMessage(bot, '#quit', () => bot.quit())
     onChatMessage(bot, '#sleep', async (user) => {
       bot.whisper(user, await sleep(bot))
     })
@@ -46,11 +46,6 @@ function onChatMessage(bot: Bot, message: string, action: Action) {
       }
     }
   })
-}
-
-function quit(bot: Bot) {
-  bot.chat("See y'all!")
-  bot.quit()
 }
 
 main()
