@@ -5,6 +5,8 @@ import { log } from './helpers'
 export async function sleep(bot: Bot): Promise<string> {
   if (bot.isSleeping) return 'Already sleeping'
   if (bot.time.isDay) return 'It is daytime'
+  if (bot.game.dimension !== 'minecraft:overworld') 
+    return `I'd rather not sleep in the ${bot.game.dimension.split(':').pop()}...`
 
   const beds = bot.findBlocks({
     matching: block => block.name.endsWith('purple_bed'),
