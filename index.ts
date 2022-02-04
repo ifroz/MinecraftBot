@@ -32,7 +32,8 @@ async function main() {
   })
 }
 
-function onChatMessage(bot: Bot, message: string, action: (username: string) => void | Promise<void>) {
+type Action = (username: string) => void | Promise<void>
+function onChatMessage(bot: Bot, message: string, action: Action) {
   bot.on('chat', async (username, chatMessage) => {
     if (chatMessage.toString().includes(message)) {
       try {
