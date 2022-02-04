@@ -15,7 +15,9 @@ async function main() {
 
   bot.on('spawn', async () => {
     onChatMessage(bot, '#quit', () => quit(bot))
-    onChatMessage(bot, '#sleep', () => sleep(bot))
+    onChatMessage(bot, '#sleep', async (user) => {
+      bot.whisper(user, await sleep(bot))
+    })
     onChatMessage(bot, '#help', (username) => bot.whisper(username, HELP))
 
     bot.chat(HELP)
