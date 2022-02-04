@@ -10,6 +10,8 @@ const log = (msg: any, ...payload: any[]) =>
 const wait = (ms: number = 1000) => 
   new Promise<void>((resolve) => setTimeout(resolve, ms))
 
+const HELP = `I am a bot. Try #{help|sleep|quit}`
+
 async function main() {
   const bot = mineflayer.createBot({
     host: config.host,
@@ -18,22 +20,23 @@ async function main() {
   } as any)
 
   bot.on('spawn', async () => {
-    await wait(2000)
-    
-    bot.chat(`[^_^] I am a bot.`)
-
     onChatMessage(bot, '#quit', () => quit(bot))
     onChatMessage(bot, '#sleep', () => sleep(bot))
+    onChatMessage(bot, '#help', (username) => bot.whisper(username, HELP))
 
-    sleep(bot)
+    bot.chat(HELP)
+
+    bot.on('playerJoined', (player) => {
+      bot.whisper(player.username, HELP)
+    })
   })
 }
 
-function onChatMessage(bot: Bot, message: string, action: () => void | Promise<void>) {
-  bot.on('message', async (chatMessage) => {
+function onChatMessage(bot: Bot, message: string, action: (username: string) => void | Promise<void>) {
+  bot.on('chat', async (username, chatMessage) => {
     if (chatMessage.toString().includes(message)) {
       try {
-        await action()
+        await action(username)
       } catch (err) {
         bot.chat(`Failed to ${message}: ${(err as Error)?.message}`)
       }
