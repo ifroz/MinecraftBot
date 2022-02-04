@@ -19,10 +19,13 @@ async function main() {
 
   bot.on('spawn', async () => {
     await wait(2000)
+    
     bot.chat(`[^_^] I am a bot.`)
 
+    onChatMessage(bot, '#exit', () => exit(bot))
+    onChatMessage(bot, '#sleep', () => sleep(bot))
+
     sleep(bot)
-    exitOnChatMessage(bot)
   })
 }
 
@@ -61,10 +64,10 @@ async function sleep(bot: Bot) {
   }
 }
 
-function exitOnChatMessage(bot: Bot, messageString = '#exit') {
-  bot.on('message', (chatMessage) => {
-    if (chatMessage.toString().includes(messageString)) {
-      exit(bot)
+function onChatMessage(bot: Bot, message: string, action: () => void | Promise<void>) {
+  bot.on('message', async (chatMessage) => {
+    if (chatMessage.toString().includes(message)) {
+      await action()
     }
   })
 }
