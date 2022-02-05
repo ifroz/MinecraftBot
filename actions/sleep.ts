@@ -9,9 +9,9 @@ export async function sleep(bot: Bot): Promise<string> {
     return `I'd rather not sleep in the ${bot.game.dimension.split(':').pop()}...`
 
   const beds = bot.findBlocks({
-    matching: block => block.name.endsWith('purple_bed'),
-    maxDistance: 32,
-    count: Infinity,
+    matching: block => block.name.endsWith('_bed'),
+    maxDistance: 16,
+    count: 4,
   })
 
   log(beds.length ? `Found ${beds.length} beds nearby.` : 'No beds found nearby.')
