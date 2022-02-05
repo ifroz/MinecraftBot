@@ -1,5 +1,8 @@
+/// <reference types="./typings" />
+
 import mineflayer, { Bot } from 'mineflayer'
 import { pathfinder } from "mineflayer-pathfinder"
+import { mineflayer as prismarineViewer } from 'prismarine-viewer'
 
 import { followPlayer } from './actions/follow'
 import { sleep } from './actions/sleep'
@@ -17,7 +20,9 @@ async function main() {
 
   bot.loadPlugin(pathfinder)
 
-  bot.on('spawn', async () => {
+  bot.once('spawn', async () => {
+    prismarineViewer(bot, { firstPerson: true, port: 3333 })
+
     onChatMessage(bot, '#help', (username) => bot.whisper(username, HELP))
     onChatMessage(bot, '#quit', () => bot.quit())
     onChatMessage(bot, '#sleep', async (user) => {
