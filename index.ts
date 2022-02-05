@@ -4,6 +4,8 @@ import mineflayer, { Bot } from 'mineflayer'
 import { pathfinder } from "mineflayer-pathfinder"
 import { mineflayer as prismarineViewer } from 'prismarine-viewer'
 
+import { first, fromEvent } from 'rxjs'
+
 import { followPlayer } from './actions/follow'
 import { sleep } from './actions/sleep'
 
@@ -20,24 +22,27 @@ async function main() {
 
   bot.loadPlugin(pathfinder)
 
-  bot.once('spawn', async () => {
-    prismarineViewer(bot, { firstPerson: true, port: 3333 })
+  fromEvent(bot, 'spawn')
+    .pipe(first())
+    .subscribe(async () => {
+        console.log('Spawned.')
+        // prismarineViewer(bot, { firstPerson: true, port: 3333 })
 
-    onChatMessage(bot, '#help', (username) => bot.whisper(username, HELP))
-    onChatMessage(bot, '#quit', () => bot.quit())
-    onChatMessage(bot, '#sleep', async (user) => {
-      bot.whisper(user, await sleep(bot))
-    })
+        onChatMessage(bot, '#help', (username) => bot.whisper(username, HELP))
+        onChatMessage(bot, '#quit', () => bot.quit())
+        onChatMessage(bot, '#sleep', async (user) => {
+          bot.whisper(user, await sleep(bot))
+        })
 
-    onChatMessage(bot, '#follow', (username) => followPlayer(bot, username))
-    onChatMessage(bot, '#stop', () => bot.pathfinder.stop())
+        onChatMessage(bot, '#follow', (username) => followPlayer(bot, username))
+        onChatMessage(bot, '#stop', () => bot.pathfinder.stop())
 
-    bot.chat(HELP)
+        bot.chat(HELP)
 
-    bot.on('playerJoined', (player) => {
-      bot.whisper(player.username, HELP)
-    })
-  })
+        bot.on('playerJoined', (player) => {
+          bot.whisper(player.username, HELP)
+        })
+      })
 }
 
 type Action = (username: string) => void | Promise<void>
