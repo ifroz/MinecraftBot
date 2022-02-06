@@ -4,12 +4,14 @@ import mineflayer, { Bot, BotEvents } from 'mineflayer'
 import { pathfinder } from 'mineflayer-pathfinder'
 import { mineflayer as prismarineViewer } from 'prismarine-viewer'
 
-import { filter, first, fromEvent } from 'rxjs'
+import { first, fromEvent } from 'rxjs'
 
 import { followPlayer } from './actions/follow'
 import { sleep } from './actions/sleep'
 
 import config from './config'
+
+import { getChatCommandFeed } from './chat'
 
 const HELP = `I am a bot. Try #{help|sleep|quit}.`
 
@@ -35,21 +37,10 @@ async function main() {
       })
     })
 
-  const omitChatMessagesFromUser = (omittedUsername: string) =>
-    filter<Parameters<BotEvents['chat']>>(
-      ([username]) => username !== omittedUsername
-    )
-  const filterChatCommand = (commandString: string) =>
-    filter<Parameters<BotEvents['chat']>>(([, message]) =>
-      message.includes(commandString)
-    )
-
-  const chatFeed = fromEvent<Parameters<BotEvents['chat']>>(bot, 'chat')
-  const incomingChatFeed = chatFeed.pipe(omitChatMessagesFromUser(bot.username))
   const onChatMessage = (
     chatCommand: string,
     action: (args: Parameters<BotEvents['chat']>) => void
-  ) => incomingChatFeed.pipe(filterChatCommand(chatCommand)).subscribe(action)
+  ) => getChatCommandFeed(bot, chatCommand).subscribe(action)
 
   onChatMessage('#help', ([username]) => bot.whisper(username, HELP))
   onChatMessage('#quit', () => bot.quit())
