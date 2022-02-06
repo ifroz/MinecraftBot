@@ -12,6 +12,9 @@ import { sleep } from './actions/sleep'
 import config from './config'
 
 import { Chat } from './chat'
+import { survive } from './survive'
+
+import { log } from './helpers'
 
 async function main() {
   const bot = mineflayer.createBot({
@@ -26,7 +29,7 @@ async function main() {
     .pipe(first())
     .subscribe(async () => {
       console.log('Spawned.')
-
+      survive(bot)
       prismarineViewer(bot, { firstPerson: true, port: 3333 })
 
       bot.chat(chat.help())
@@ -51,7 +54,7 @@ async function main() {
 
   interval(15e3).subscribe(async () => {
     if (bot.time.isDay || bot.isSleeping) return
-    console.log(await sleep(bot))
+    log(await sleep(bot))
   })
 
   chat.command('#follow').subscribe(([username]) => followPlayer(bot, username))
