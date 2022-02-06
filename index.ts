@@ -1,6 +1,6 @@
 /// <reference types="./typings" />
 
-import mineflayer, { Bot, BotEvents } from 'mineflayer'
+import mineflayer from 'mineflayer'
 import { pathfinder } from 'mineflayer-pathfinder'
 import { mineflayer as prismarineViewer } from 'prismarine-viewer'
 
@@ -12,8 +12,6 @@ import { sleep } from './actions/sleep'
 import config from './config'
 
 import { Chat } from './chat'
-
-const HELP = `I am a bot. Try #{help|sleep|quit}.`
 
 async function main() {
   const bot = mineflayer.createBot({
@@ -28,12 +26,12 @@ async function main() {
     .pipe(first())
     .subscribe(async () => {
       console.log('Spawned.')
+
       prismarineViewer(bot, { firstPerson: true, port: 3333 })
 
-      bot.chat(HELP)
-
+      bot.chat(chat.help())
       bot.on('playerJoined', (player) => {
-        bot.whisper(player.username, HELP)
+        bot.whisper(player.username, chat.help())
       })
     })
 
