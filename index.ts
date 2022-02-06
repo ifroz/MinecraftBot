@@ -4,7 +4,7 @@ import mineflayer from 'mineflayer'
 import { pathfinder } from 'mineflayer-pathfinder'
 import { mineflayer as prismarineViewer } from 'prismarine-viewer'
 
-import { first, fromEvent } from 'rxjs'
+import { first, fromEvent, interval } from 'rxjs'
 
 import { followPlayer } from './actions/follow'
 import { sleep } from './actions/sleep'
@@ -47,6 +47,11 @@ async function main() {
 
   chat.command('#sleep').subscribe(async ([username]) => {
     bot.whisper(username, await sleep(bot))
+  })
+
+  interval(15e3).subscribe(async () => {
+    if (bot.time.isDay || bot.isSleeping) return
+    console.log(await sleep(bot))
   })
 
   chat.command('#follow').subscribe(([username]) => followPlayer(bot, username))
