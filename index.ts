@@ -11,7 +11,7 @@ import { sleep } from './actions/sleep'
 
 import config from './config'
 
-import { getChatCommandFeed } from './chat'
+import { Chat } from './chat'
 
 const HELP = `I am a bot. Try #{help|sleep|quit}.`
 
@@ -37,19 +37,22 @@ async function main() {
       })
     })
 
-  const onChatMessage = (
-    chatCommand: string,
-    action: (args: Parameters<BotEvents['chat']>) => void
-  ) => getChatCommandFeed(bot, chatCommand).subscribe(action)
+  const chat = new Chat(bot)
+  chat.command('#help').subscribe(([username]) => {
+    bot.whisper(username, chat.help())
+  })
 
-  onChatMessage('#help', ([username]) => bot.whisper(username, HELP))
-  onChatMessage('#quit', () => bot.quit())
-  onChatMessage('#sleep', async ([username]) => {
+  chat.command('#quit').subscribe(() => {
+    bot.quit()
+    process.exit(0)
+  })
+
+  chat.command('#sleep').subscribe(async ([username]) => {
     bot.whisper(username, await sleep(bot))
   })
 
-  onChatMessage('#follow', ([username]) => followPlayer(bot, username))
-  onChatMessage('#stop', () => bot.pathfinder.stop())
+  chat.command('#follow').subscribe(([username]) => followPlayer(bot, username))
+  chat.command('#stop').subscribe(() => bot.pathfinder.stop())
 }
 
 main()
