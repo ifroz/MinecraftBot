@@ -5,7 +5,7 @@ export const dump = (payload: any) =>
 /** Logs a message string or Error message with optional JSON payload. */
 export const log = (msg: any, ...payload: any[]) =>
   console.log(
-    msg instanceof Error ? msg.message : msg,
+    `${msg instanceof Error ? msg.message : msg}`.trim(),
     ...payload.map((p) => JSON.stringify(p))
   )
 

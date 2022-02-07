@@ -3,9 +3,23 @@ import { Bot, Chest } from 'mineflayer'
 import { goals, Movements } from 'mineflayer-pathfinder'
 import { Block } from 'prismarine-block'
 import config from '../config'
-import { log } from '../lib/helpers'
+import { log, wait } from '../lib/helpers'
 
-const STACK = 64
+const aggregateItemCount = (sum: number, { count }: Record<'count', number>) =>
+  count + sum
+
+const getInventoryItems = (bot: Bot, itemName: string) =>
+  bot.inventory.items().filter(({ name }) => name === itemName)
+const countInventoryItems = (bot: Bot, itemName: string) =>
+  getInventoryItems(bot, itemName).reduce(aggregateItemCount, 0)
+
+const logRelevantItems = (bot: Bot, message = '') =>
+  log(
+    `${message} I have ${countInventoryItems(
+      bot,
+      'sugar_cane'
+    )} sugar canes and ${countInventoryItems(bot, 'paper')} paper.`
+  )
 
 export async function paperFarming(bot: Bot) {
   const mcData = MinecraftData(bot.version)
@@ -22,75 +36,11 @@ export async function paperFarming(bot: Bot) {
   }
   bot.chat('Paper farming...')
 
-  const findNearbyChests = () =>
-    bot.findBlocks({
-      matching: (block) => block.name === 'chest',
-      maxDistance: 12,
-      count: 32,
-    })
+  logRelevantItems(bot, 'Start.')
 
-  async function depositNearby(bot: Bot, itemName: string) {
-    for (const vec3 of findNearbyChests()) {
-      type ContainerChest = Chest & { containerItems: typeof chest.items }
-      const chest = await bot.openChest(bot.blockAt(vec3) as Block)
+  await withdrawNearby(bot, 'sugar_cane', 3)
 
-      const items = (chest as ContainerChest)
-        .containerItems()
-        .filter((item) => item.name === itemName) // already has similar items in it
-
-      if (items.length) {
-        try {
-          await chest.deposit(items[0].type, items[0].metadata, items[0].count)
-          console.log(`Deposited ${items[0].count}`)
-        } catch (err) {
-          log(err)
-        }
-      }
-    }
-  }
-
-  async function withdrawNearby(bot: Bot, itemName: string, take: number) {
-    const chestCoords = findNearbyChests()
-
-    for (const vec3 of chestCoords) {
-      type ContainerChest = Chest & { containerItems: typeof chest.items }
-      const chest = await bot.openChest(bot.blockAt(vec3) as Block)
-      const items = (chest as ContainerChest)
-        .containerItems()
-        .filter((item) => item.name === itemName)
-    }
-
-    if (take <= 0) return
-    for (const vec3 of chestCoords) {
-      type ContainerChest = Chest & { containerItems: typeof chest.items }
-      const chest = await bot.openChest(bot.blockAt(vec3) as Block)
-      const items = (chest as ContainerChest)
-        .containerItems()
-        .filter((item) => item.name === itemName)
-
-      if (take > 0) {
-        for (const item of items) {
-          try {
-            const withdrawn = Math.min(item.count, take, 64)
-            await chest.withdraw(item.type, item.metadata, withdrawn)
-            log(`Withdrawn ${withdrawn} ${item.displayName}.`)
-            take -= item.count
-            if (take <= 0) break
-          } catch (err) {
-            log(err)
-          }
-          break
-        }
-        await new Promise((resolve) => setTimeout(resolve, 500))
-      }
-    }
-  }
-
-  const sugarCanes = bot.inventory
-    .items()
-    .filter(({ name }) => name === 'sugar_cane')
-  const sugarCaneCount = sugarCanes.reduce((sum, { count }) => sum + count, 0)
-  await withdrawNearby(bot, 'sugar_cane', 3 * STACK - sugarCaneCount)
+  logRelevantItems(bot, 'Withdrawn.')
 
   const craftingTable = bot.findBlock({
     matching: (block) => block.name === 'crafting_table',
@@ -105,9 +55,10 @@ export async function paperFarming(bot: Bot) {
 
   if (recipes.length) {
     try {
-      const amount = Math.min(64, Math.floor(sugarCaneCount / 3))
-      log(`Crafting ${amount}...`)
-      await bot.craft(recipes[0], amount, craftingTable as Block)
+      // const amount = Math.min(64, Math.floor(sugarCaneCount / 3))
+      const amount = countInventoryItems(bot, 'sugar_cane')
+      log(`Crafting ${amount}?...`)
+      await bot.craft(recipes[0], null, craftingTable as Block)
     } catch (err) {
       log((err as Error)?.message)
     }
@@ -115,5 +66,83 @@ export async function paperFarming(bot: Bot) {
     log('No sugar cane to craft.')
   }
 
+  logRelevantItems(bot, 'Crafted.')
+
   await depositNearby(bot, 'paper')
+
+
+  logRelevantItems(bot, 'Done.')
+}
+
+const findNearbyChests = (bot: Bot) =>
+  bot.findBlocks({
+    matching: (block) => block.name === 'chest',
+    maxDistance: 12,
+    count: 32,
+  })
+
+async function withdrawNearby(bot: Bot, itemName: string, take: number) {
+  const chestCoords = findNearbyChests(bot)
+
+  for (const vec3 of chestCoords) {
+    type ContainerChest = Chest & { containerItems: typeof chest.items }
+    const chest = await bot.openChest(bot.blockAt(vec3) as Block)
+    const items = (chest as ContainerChest)
+      .containerItems()
+      .filter((item) => item.name === itemName)
+  }
+
+  if (take <= 0) {
+    log(`Trying to take ${take}.`)
+    return
+  }
+  for (const vec3 of chestCoords) {
+    type ContainerChest = Chest & { containerItems: typeof chest.items }
+    const chest = await bot.openChest(bot.blockAt(vec3) as Block)
+    const items = (chest as ContainerChest)
+      .containerItems()
+      .filter((item) => item.name === itemName)
+
+    if (take > 0) {
+      for (const item of items) {
+        try {
+          const withdrawn = Math.min(item.count, take, 64)
+          await chest.withdraw(item.type, item.metadata, withdrawn)
+          log(`Withdrawn ${withdrawn} ${item.displayName}.`)
+          take -= item.count
+          if (take <= 0) return
+        } catch (err) {
+          log(err)
+        }
+        break
+      }
+      await new Promise((resolve) => setTimeout(resolve, 500))
+    }
+  }
+}
+
+async function depositNearby(bot: Bot, itemName: string) {
+  let amount = countInventoryItems(bot, itemName)
+  let gave = 0
+  for (const vec3 of findNearbyChests(bot)) {
+    if (gave >= amount) return
+    type ContainerChest = Chest & { containerItems: typeof chest.items }
+    const chest = await bot.openChest(bot.blockAt(vec3) as Block)
+
+    const chestItems = (chest as ContainerChest)
+      .containerItems()
+      .filter((item) => item.name === itemName) // already has similar items in it
+
+    if (chestItems.length) {
+      const { type, metadata } = chestItems[0]
+      try {
+        log(`Preposit`, amount)
+        await chest.deposit(type, metadata, amount)
+        gave += amount
+        log(`Deposited ${amount} ${itemName} to chest ${vec3}.`)
+      } catch (err) {
+        log(err)
+      }
+    }
+  }
 }
