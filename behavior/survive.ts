@@ -1,8 +1,7 @@
-import { throttle } from 'lodash'
 import MinecraftData from 'minecraft-data'
 import { Bot } from 'mineflayer'
 import { fromEvent } from 'rxjs'
-import { log } from './helpers'
+import { log } from '../lib/helpers'
 
 export function survive(bot: Bot) {
   const foods = MinecraftData(bot.version).foodsArray.sort(
@@ -10,8 +9,7 @@ export function survive(bot: Bot) {
   )
   const foodNames = foods.map((food) => food.name)
 
-  fromEvent(bot, 'health')
-  .subscribe(async () => {
+  fromEvent(bot, 'health').subscribe(async () => {
     log(
       `My health is: ${bot.health}; food ${bot.food}, sat ${bot.foodSaturation}`
     )

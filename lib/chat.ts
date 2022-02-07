@@ -1,13 +1,15 @@
 import { Bot, BotEvents } from 'mineflayer'
 import { filter, fromEvent } from 'rxjs'
 
-import config from './config'
+import config from '../config'
 
 type MessageArgs = Parameters<BotEvents['chat']>
 
 export const filterTextMessages = () =>
   filter<MessageArgs>(([, , translate]) =>
-    ['chat.type.text', 'commands.message.display.incoming'].includes(translate as string)
+    ['chat.type.text', 'commands.message.display.incoming'].includes(
+      translate as string
+    )
   )
 
 export const omitUser = (omittedUsername: string) =>
@@ -31,7 +33,6 @@ export const getChatCommandFeed = (bot: Bot, command: string) =>
 interface Command {
   command: string
   description: string
-  // action: () => void
   feed: Feed
 }
 
