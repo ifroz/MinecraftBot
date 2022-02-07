@@ -1,1 +1,1 @@
-declare module 'prismarine-viewer';
+declare module 'prismarine-viewer'

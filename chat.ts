@@ -6,7 +6,9 @@ import config from './config'
 type MessageArgs = Parameters<BotEvents['chat']>
 
 export const filterTextMessages = () =>
-  filter<MessageArgs>(([, , translate]) => translate === 'chat.type.text')
+  filter<MessageArgs>(([, , translate]) =>
+    ['chat.type.text', 'commands.message.display.incoming'].includes(translate as string)
+  )
 
 export const omitUser = (omittedUsername: string) =>
   filter<MessageArgs>(([username]) => username !== omittedUsername)
