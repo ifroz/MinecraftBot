@@ -1,6 +1,6 @@
 /// <reference types="./typings" />
 
-import mineflayer, { Chest, Furnace } from 'mineflayer'
+import mineflayer, { Bot, Chest, Furnace } from 'mineflayer'
 import { goals, Movements, pathfinder } from 'mineflayer-pathfinder'
 import { mineflayer as prismarineViewer } from 'prismarine-viewer'
 import { Block } from 'prismarine-block'
@@ -77,13 +77,11 @@ async function main() {
     }
     bot.chat('Paper farming...')
 
-    const chestCoords =
-      [] ||
-      bot.findBlocks({
-        matching: (block) => block.name === 'chest',
-        maxDistance: 12,
-        count: 32,
-      })
+    const chestCoords = bot.findBlocks({
+      matching: (block) => block.name === 'chest',
+      maxDistance: 12,
+      count: 32,
+    })
 
     let take = 3 * 64
     for (const vec3 of chestCoords) {
@@ -96,9 +94,9 @@ async function main() {
       if (take > 0) {
         for (const sugarCane of sugarCanes) {
           try {
-            const withdrawn = Math.min(sugarCane.count, take)
+            const withdrawn = Math.min(sugarCane.count, take, 64)
             await chest.withdraw(sugarCane.type, sugarCane.metadata, withdrawn)
-            log(`Withdrawn ${withdrawn}`)
+            log(`Withdrawn ${withdrawn} ${sugarCane.displayName}.`)
             take -= sugarCane.count
             if (take <= 0) break
           } catch (err) {
@@ -108,14 +106,12 @@ async function main() {
         }
         await new Promise((resolve) => setTimeout(resolve, 1000))
       }
-      
     }
 
     const sugarCanes = bot.inventory
       .items()
-      .filter((item) => item.name === 'sugar_cane')
+      .filter(({ name }) => name === 'sugar_cane')
     const sugarCaneCount = sugarCanes.reduce((sum, { count }) => sum + count, 0)
-    dump(sugarCaneCount)
 
     const craftingTable = bot.findBlock({
       matching: (block) => block.name === 'crafting_table',
@@ -127,8 +123,6 @@ async function main() {
       1,
       craftingTable
     )
-
-    dump(recipes)
 
     if (recipes.length) {
       try {
@@ -142,6 +136,26 @@ async function main() {
       }
     } else {
       log('No sugar cane to craft.')
+    }
+
+    // ISSUE: Can't find paper in slots [54 - 90], (item id: 791)
+    for (const vec3 of chestCoords) {
+      type Container = { containerItems: typeof chest.items }
+      const chest = (await bot.openChest(bot.blockAt(vec3) as Block)) as Chest &
+        Container
+      const papers = chest
+        .containerItems()
+        .filter((item) => item.name === 'paper')
+      
+      if (papers.length) {
+        dump(chest.containerItems().length)
+        try {
+          await chest.deposit(papers[0].type, null, 64)
+          log('Deposited.')
+        } catch (err) {
+          log((err as Error).message)
+        }
+      }
     }
   })
   chat.command('#follow').subscribe(([username]) => followPlayer(bot, username))
