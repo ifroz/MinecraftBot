@@ -3,7 +3,7 @@ import { Bot, Chest } from 'mineflayer'
 import { goals, Movements } from 'mineflayer-pathfinder'
 import { Block } from 'prismarine-block'
 import config from '../config'
-import { log, wait } from '../lib/helpers'
+import { log } from '../lib/helpers'
 
 const aggregateItemCount = (sum: number, { count }: Record<'count', number>) =>
   count + sum
@@ -98,7 +98,9 @@ async function withdrawNearby(bot: Bot, itemName: string, take: number) {
   }
   for (const vec3 of chestCoords) {
     type ContainerChest = Chest & { containerItems: typeof chest.items }
-    const chest = await bot.openChest(bot.blockAt(vec3) as Block)
+    const chestBlock = bot.blockAt(vec3) as Block
+    if (chestBlock.getProperties().type === 'right') continue
+    const chest = await bot.openChest(chestBlock)
     const items = (chest as ContainerChest)
       .containerItems()
       .filter((item) => item.name === itemName)
