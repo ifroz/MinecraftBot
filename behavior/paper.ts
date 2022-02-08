@@ -33,8 +33,8 @@ export async function paperFarming(bot: Bot) {
     )
   } catch (err) {
     log((err as Error)?.message)
+    return
   }
-  bot.chat('Paper farming...')
 
   logRelevantItems(bot, 'Start.')
 
@@ -42,34 +42,11 @@ export async function paperFarming(bot: Bot) {
 
   logRelevantItems(bot, 'Withdrawn.')
 
-  const craftingTable = bot.findBlock({
-    matching: (block) => block.name === 'crafting_table',
-  })
-
-  const recipes = bot.recipesFor(
-    mcData.findItemOrBlockByName('paper').id,
-    null,
-    1,
-    craftingTable
-  )
-
-  if (recipes.length) {
-    try {
-      // const amount = Math.min(64, Math.floor(sugarCaneCount / 3))
-      const amount = countInventoryItems(bot, 'sugar_cane')
-      log(`Crafting ${amount}?...`)
-      await bot.craft(recipes[0], null, craftingTable as Block)
-    } catch (err) {
-      log((err as Error)?.message)
-    }
-  } else {
-    log('No sugar cane to craft.')
-  }
+  await craftItem(bot, mcData.findItemOrBlockByName('paper').id)
 
   logRelevantItems(bot, 'Crafted.')
 
   await depositNearby(bot, 'paper')
-
 
   logRelevantItems(bot, 'Done.')
 }
@@ -80,6 +57,26 @@ const findNearbyChests = (bot: Bot) =>
     maxDistance: 12,
     count: 32,
   })
+
+async function craftItem(bot: Bot, itemId: number) {
+  const craftingTable = bot.findBlock({
+    matching: (block) => block.name === 'crafting_table',
+  })
+
+  const recipes = bot.recipesFor(itemId, null, 1, craftingTable)
+
+  if (recipes.length) {
+    try {
+      const amount = countInventoryItems(bot, 'sugar_cane')
+      log(`Crafting ${amount}?...`)
+      await bot.craft(recipes[0], null, craftingTable as Block)
+    } catch (err) {
+      log((err as Error)?.message)
+    }
+  } else {
+    log('No sugar cane to craft.')
+  }
+}
 
 async function withdrawNearby(bot: Bot, itemName: string, take: number) {
   const chestCoords = findNearbyChests(bot)
@@ -138,7 +135,6 @@ async function depositNearby(bot: Bot, itemName: string) {
     if (chestItems.length) {
       const { type, metadata } = chestItems[0]
       try {
-        log(`Preposit`, amount)
         await chest.deposit(type, metadata, amount)
         gave += amount
         log(`Deposited ${amount} ${itemName} to chest ${vec3}.`)
