@@ -31,6 +31,7 @@ async function main() {
     .pipe(first())
     .subscribe(async () => {
       console.log('Spawned.')
+      
       survive(bot)
 
       // prismarineViewer(bot, { firstPerson: true, port: 3333 })
@@ -55,10 +56,10 @@ async function main() {
     bot.whisper(username, await sleep(bot))
   })
 
-  interval(15e3).subscribe(async () => {
-    if (bot.time.isDay || bot.isSleeping) return
-    log(await sleep(bot))
-  })
+  // interval(15e3).subscribe(async () => {
+  //   if (bot.time.isDay || bot.isSleeping) return
+  //   log(await sleep(bot))
+  // })
 
   chat.command('#paper').subscribe(() => paperFarming(bot))
   chat.command('#follow').subscribe(([username]) => followPlayer(bot, username))
